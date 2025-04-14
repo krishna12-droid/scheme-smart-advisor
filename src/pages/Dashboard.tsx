@@ -1,9 +1,9 @@
-
 import { useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useProfile } from "@/contexts/ProfileContext";
 import Header from "@/components/Header";
 import SchemeCard from "@/components/SchemeCard";
+import { SchemeFilters } from "@/components/SchemeFilters";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -12,6 +12,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Filter, Download, Printer } from "lucide-react";
+import { Scheme } from "@/types";
 
 const educationOptions = [
   "Primary School", "High School", "Diploma", "Graduate", "Post Graduate", "Doctorate"
@@ -34,20 +35,39 @@ const DashboardPage = () => {
   const [selectedTab, setSelectedTab] = useState(hasProfile ? "recommendations" : "profile");
   const [searchTerm, setSearchTerm] = useState("");
   const [providerFilter, setProviderFilter] = useState<string[]>([]);
+  const [sortBy, setSortBy] = useState("name");
   
-  // Form state
-  const [age, setAge] = useState(profile?.age || 30);
-  const [gender, setGender] = useState<"male" | "female" | "other">(profile?.gender || "male");
-  const [state, setState] = useState(profile?.state || "");
-  const [district, setDistrict] = useState(profile?.district || "");
-  const [income, setIncome] = useState(profile?.income || 0);
-  const [maritalStatus, setMaritalStatus] = useState<"single" | "married" | "divorced" | "widowed">(
-    profile?.maritalStatus || "single"
-  );
-  const [occupation, setOccupation] = useState(profile?.occupation || "");
-  const [education, setEducation] = useState(profile?.education || "");
-  const [conditions, setConditions] = useState<string[]>(profile?.healthConditions || []);
-  const [dependents, setDependents] = useState(profile?.dependents || 0);
+  const toggleProviderFilter = (provider: string) => {
+    if (providerFilter.includes(provider)) {
+      setProviderFilter(providerFilter.filter(p => p !== provider));
+    } else {
+      setProviderFilter([...providerFilter, provider]);
+    }
+  };
+  
+  const filteredAndSortedSchemes = [...recommendedSchemes]
+    .filter(scheme => {
+      const matchesSearch = searchTerm === "" || 
+        scheme.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
+        scheme.description.toLowerCase().includes(searchTerm.toLowerCase());
+      
+      const matchesProvider = providerFilter.length === 0 || 
+        providerFilter.includes(scheme.provider);
+      
+      return matchesSearch && matchesProvider;
+    })
+    .sort((a, b) => {
+      switch (sortBy) {
+        case "name":
+          return a.name.localeCompare(b.name);
+        case "name-desc":
+          return b.name.localeCompare(a.name);
+        case "provider":
+          return a.provider.localeCompare(b.provider);
+        default:
+          return 0;
+      }
+    });
   
   const handleSubmitProfile = (e: React.FormEvent) => {
     e.preventDefault();
@@ -68,39 +88,24 @@ const DashboardPage = () => {
     setSelectedTab("recommendations");
   };
   
-  const toggleProviderFilter = (provider: string) => {
-    if (providerFilter.includes(provider)) {
-      setProviderFilter(providerFilter.filter(p => p !== provider));
-    } else {
-      setProviderFilter([...providerFilter, provider]);
-    }
-  };
-  
-  const filteredSchemes = recommendedSchemes.filter(scheme => {
-    // Apply search filter
-    const matchesSearch = searchTerm === "" || 
-      scheme.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
-      scheme.description.toLowerCase().includes(searchTerm.toLowerCase());
-    
-    // Apply provider filter
-    const matchesProvider = providerFilter.length === 0 || providerFilter.includes(scheme.provider);
-    
-    return matchesSearch && matchesProvider;
-  });
-  
   const handlePrint = () => {
     window.print();
   };
   
   return (
-    <div className="min-h-screen flex flex-col">
+    <div className="min-h-screen flex flex-col bg-gradient-to-b from-gray-50 to-white">
       <Header />
       
-      <main className="flex-grow py-8 bg-gray-50">
-        <div className="container mx-auto px-4">
-          <h1 className="text-3xl font-bold mb-6">
-            {hasProfile ? `Welcome back, ${currentUser?.email?.split('@')[0]}` : "Complete Your Profile"}
-          </h1>
+      <main className="flex-grow py-8">
+        <div className="container mx-auto px-4 space-y-8">
+          <div className="space-y-2">
+            <h1 className="text-3xl font-bold">
+              {hasProfile ? `Welcome back, ${currentUser?.email?.split('@')[0]}` : "Complete Your Profile"}
+            </h1>
+            <p className="text-muted-foreground">
+              {hasProfile ? "Here are your recommended insurance schemes" : "Tell us about yourself to get personalized recommendations"}
+            </p>
+          </div>
           
           <Tabs value={selectedTab} onValueChange={setSelectedTab} className="space-y-6">
             <TabsList className="grid w-full md:w-auto md:inline-grid grid-cols-2 md:grid-cols-2">
@@ -275,81 +280,54 @@ const DashboardPage = () => {
             
             <TabsContent value="recommendations">
               {loading ? (
-                <div className="text-center py-12">Loading recommendations...</div>
+                <div className="text-center py-12">
+                  <div className="animate-pulse space-y-4">
+                    <div className="h-4 bg-gray-200 rounded w-3/4 mx-auto"></div>
+                    <div className="h-4 bg-gray-200 rounded w-1/2 mx-auto"></div>
+                  </div>
+                </div>
               ) : (
-                <>
-                  <div className="mb-6 space-y-4">
-                    <div className="flex flex-col md:flex-row justify-between md:items-center gap-4">
-                      <div className="flex-1">
-                        <Input
-                          placeholder="Search schemes..."
-                          value={searchTerm}
-                          onChange={(e) => setSearchTerm(e.target.value)}
-                          className="max-w-md"
-                        />
-                      </div>
-                      
-                      <div className="flex flex-wrap gap-2">
-                        <div className="flex items-center">
-                          <Filter className="h-4 w-4 mr-2" />
-                          <span className="text-sm font-medium mr-2">Filter by:</span>
-                        </div>
-                        
-                        <Button
-                          variant={providerFilter.includes("LIC") ? "secondary" : "outline"}
-                          size="sm"
-                          onClick={() => toggleProviderFilter("LIC")}
-                        >
-                          LIC
-                        </Button>
-                        <Button
-                          variant={providerFilter.includes("Star Health") ? "secondary" : "outline"}
-                          size="sm"
-                          onClick={() => toggleProviderFilter("Star Health")}
-                        >
-                          Star Health
-                        </Button>
-                        <Button
-                          variant={providerFilter.includes("Government") ? "secondary" : "outline"}
-                          size="sm"
-                          onClick={() => toggleProviderFilter("Government")}
-                        >
-                          Government
-                        </Button>
-                      </div>
-                      
-                      <div className="flex gap-2">
-                        <Button variant="outline" size="sm" onClick={handlePrint}>
-                          <Printer className="h-4 w-4 mr-2" />
-                          Print
-                        </Button>
-                        <Button variant="outline" size="sm">
-                          <Download className="h-4 w-4 mr-2" />
-                          Download PDF
-                        </Button>
-                      </div>
-                    </div>
-                    
-                    <div className="flex items-center justify-between">
-                      <h2 className="text-xl font-semibold">
-                        {filteredSchemes.length} Recommended Schemes
-                      </h2>
+                <div className="space-y-6">
+                  <SchemeFilters
+                    searchTerm={searchTerm}
+                    onSearchChange={setSearchTerm}
+                    sortBy={sortBy}
+                    onSortChange={setSortBy}
+                    providerFilter={providerFilter}
+                    onProviderFilterChange={toggleProviderFilter}
+                  />
+                  
+                  <div className="flex items-center justify-between">
+                    <h2 className="text-xl font-semibold">
+                      {filteredAndSortedSchemes.length} Recommended Schemes
+                    </h2>
+                    <div className="flex gap-2">
+                      <Button variant="outline" size="sm" onClick={handlePrint}>
+                        <Printer className="h-4 w-4 mr-2" />
+                        Print
+                      </Button>
+                      <Button variant="outline" size="sm">
+                        <Download className="h-4 w-4 mr-2" />
+                        Download PDF
+                      </Button>
                     </div>
                   </div>
                   
-                  {filteredSchemes.length === 0 ? (
-                    <div className="text-center py-12 bg-white rounded-lg shadow">
-                      <p className="text-lg text-gray-500">No matching schemes found.</p>
-                      <p className="text-sm text-gray-400 mt-2">Try adjusting your filters or search criteria.</p>
-                    </div>
+                  {filteredAndSortedSchemes.length === 0 ? (
+                    <Card className="text-center py-12">
+                      <CardContent>
+                        <p className="text-lg text-gray-500">No matching schemes found.</p>
+                        <p className="text-sm text-gray-400 mt-2">Try adjusting your filters or search criteria.</p>
+                      </CardContent>
+                    </Card>
                   ) : (
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                      {filteredSchemes.map((scheme) => (
+                      {filteredAndSortedSchemes.map((scheme) => (
                         <SchemeCard key={scheme.id} scheme={scheme} />
                       ))}
                     </div>
                   )}
-                </>
+                </div>
               )}
             </TabsContent>
           </Tabs>

@@ -10,8 +10,9 @@ import {
   CardTitle 
 } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { ExternalLink, ChevronDown, ChevronUp } from "lucide-react";
+import { ExternalLink, ChevronDown, ChevronUp, Heart } from "lucide-react";
 import { useState } from "react";
+import { cn } from "@/lib/utils";
 
 interface SchemeCardProps {
   scheme: Scheme;
@@ -19,6 +20,7 @@ interface SchemeCardProps {
 
 const SchemeCard = ({ scheme }: SchemeCardProps) => {
   const [expanded, setExpanded] = useState(false);
+  const [isFavorite, setIsFavorite] = useState(false);
 
   const getProviderColor = (provider: string) => {
     switch (provider) {
@@ -34,13 +36,30 @@ const SchemeCard = ({ scheme }: SchemeCardProps) => {
   };
 
   return (
-    <Card className="scheme-card">
+    <Card className={cn(
+      "scheme-card group transition-all duration-300 hover:shadow-lg",
+      "transform hover:-translate-y-1",
+      "animate-in fade-in-50 duration-500"
+    )}>
       <CardHeader className="pb-3">
         <div className="flex justify-between items-start">
-          <div>
+          <div className="flex gap-2 flex-wrap">
             <Badge className={getProviderColor(scheme.provider)}>{scheme.provider}</Badge>
-            <Badge variant="outline" className="ml-2">{scheme.type}</Badge>
+            <Badge variant="outline">{scheme.type}</Badge>
           </div>
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-8 w-8"
+            onClick={() => setIsFavorite(!isFavorite)}
+          >
+            <Heart
+              className={cn(
+                "h-4 w-4 transition-colors",
+                isFavorite ? "fill-red-500 text-red-500" : "text-gray-500"
+              )}
+            />
+          </Button>
         </div>
         <CardTitle className="text-xl mt-2">{scheme.name}</CardTitle>
         <CardDescription className="line-clamp-2">
@@ -49,46 +68,47 @@ const SchemeCard = ({ scheme }: SchemeCardProps) => {
       </CardHeader>
       
       <CardContent className="pb-2">
-        {expanded && (
-          <>
-            <h4 className="font-semibold text-sm mb-1">Benefits:</h4>
-            <ul className="list-disc pl-5 mb-4 text-sm">
-              {scheme.benefits.map((benefit, index) => (
-                <li key={index}>{benefit}</li>
-              ))}
-            </ul>
-            
-            {scheme.coverage_amount && (
-              <div className="mb-2">
-                <span className="text-sm font-semibold">Coverage: </span>
-                <span className="text-sm">{scheme.coverage_amount}</span>
-              </div>
-            )}
-            
-            {scheme.premium && (
-              <div className="mb-2">
-                <span className="text-sm font-semibold">Premium: </span>
-                <span className="text-sm">{scheme.premium}</span>
-              </div>
-            )}
-            
-            {scheme.documents && (
-              <div className="mb-2">
-                <h4 className="font-semibold text-sm mb-1">Required Documents:</h4>
-                <ul className="list-disc pl-5 text-sm">
-                  {scheme.documents.map((doc, index) => (
-                    <li key={index}>{doc}</li>
-                  ))}
-                </ul>
-              </div>
-            )}
-          </>
-        )}
+        <div className={cn(
+          "transition-all duration-300",
+          expanded ? "opacity-100" : "opacity-0 h-0 overflow-hidden"
+        )}>
+          <h4 className="font-semibold text-sm mb-1">Benefits:</h4>
+          <ul className="list-disc pl-5 mb-4 text-sm space-y-1">
+            {scheme.benefits.map((benefit, index) => (
+              <li key={index}>{benefit}</li>
+            ))}
+          </ul>
+          
+          {scheme.coverage_amount && (
+            <div className="mb-2">
+              <span className="text-sm font-semibold">Coverage: </span>
+              <span className="text-sm">{scheme.coverage_amount}</span>
+            </div>
+          )}
+          
+          {scheme.premium && (
+            <div className="mb-2">
+              <span className="text-sm font-semibold">Premium: </span>
+              <span className="text-sm">{scheme.premium}</span>
+            </div>
+          )}
+          
+          {scheme.documents && (
+            <div className="mb-2">
+              <h4 className="font-semibold text-sm mb-1">Required Documents:</h4>
+              <ul className="list-disc pl-5 text-sm space-y-1">
+                {scheme.documents.map((doc, index) => (
+                  <li key={index}>{doc}</li>
+                ))}
+              </ul>
+            </div>
+          )}
+        </div>
         
         <Button 
           variant="ghost" 
           size="sm" 
-          className="px-0 text-sm w-full justify-start"
+          className="px-0 text-sm w-full justify-start hover:bg-transparent"
           onClick={() => setExpanded(!expanded)}
         >
           {expanded ? (
@@ -104,9 +124,9 @@ const SchemeCard = ({ scheme }: SchemeCardProps) => {
       </CardContent>
       
       <CardFooter>
-        <Button asChild className="w-full">
+        <Button asChild className="w-full gap-2 bg-gradient-to-r from-primary to-primary/90 hover:from-primary/90 hover:to-primary">
           <a href={scheme.application_link} target="_blank" rel="noopener noreferrer">
-            Apply Now <ExternalLink className="ml-2 h-4 w-4" />
+            Apply Now <ExternalLink className="h-4 w-4" />
           </a>
         </Button>
       </CardFooter>
