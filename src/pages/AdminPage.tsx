@@ -176,7 +176,7 @@ const AdminPage = () => {
                               <TableCell className="font-medium">{user.name}</TableCell>
                               <TableCell>{user.email}</TableCell>
                               <TableCell>
-                                <Badge variant={hasProfile ? "success" : "outline"}>
+                                <Badge variant={hasProfile ? "default" : "outline"} className={hasProfile ? "bg-green-500 hover:bg-green-600" : ""}>
                                   {hasProfile ? "Complete" : "Incomplete"}
                                 </Badge>
                               </TableCell>

@@ -290,7 +290,7 @@ export const governmentSchemes: Scheme[] = [
     eligibilityCriteria: {
       maxAge: 30,
       maxIncome: 600000,
-      education: ["High School", "Graduate", "Post Graduate"],
+      educationLevel: ["High School", "Graduate", "Post Graduate"],
     },
     benefits: [
       "Financial assistance for education",
