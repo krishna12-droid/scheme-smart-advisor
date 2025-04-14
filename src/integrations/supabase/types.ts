@@ -9,7 +9,144 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
-      [_ in never]: never
+      profiles: {
+        Row: {
+          age: number | null
+          created_at: string
+          dependents: number | null
+          district: string | null
+          education: string | null
+          email: string | null
+          gender: string | null
+          health_conditions: string[] | null
+          id: string
+          income: number | null
+          marital_status: string | null
+          name: string | null
+          occupation: string | null
+          state: string | null
+          updated_at: string
+        }
+        Insert: {
+          age?: number | null
+          created_at?: string
+          dependents?: number | null
+          district?: string | null
+          education?: string | null
+          email?: string | null
+          gender?: string | null
+          health_conditions?: string[] | null
+          id: string
+          income?: number | null
+          marital_status?: string | null
+          name?: string | null
+          occupation?: string | null
+          state?: string | null
+          updated_at?: string
+        }
+        Update: {
+          age?: number | null
+          created_at?: string
+          dependents?: number | null
+          district?: string | null
+          education?: string | null
+          email?: string | null
+          gender?: string | null
+          health_conditions?: string[] | null
+          id?: string
+          income?: number | null
+          marital_status?: string | null
+          name?: string | null
+          occupation?: string | null
+          state?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      saved_schemes: {
+        Row: {
+          created_at: string
+          id: string
+          scheme_id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          scheme_id: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          scheme_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "saved_schemes_scheme_id_fkey"
+            columns: ["scheme_id"]
+            isOneToOne: false
+            referencedRelation: "schemes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "saved_schemes_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      schemes: {
+        Row: {
+          application_link: string | null
+          benefits: string[] | null
+          coverage_amount: string | null
+          created_at: string
+          description: string | null
+          documents: string[] | null
+          eligibility_criteria: Json | null
+          id: string
+          name: string
+          premium: string | null
+          provider: string | null
+          type: string | null
+          updated_at: string
+        }
+        Insert: {
+          application_link?: string | null
+          benefits?: string[] | null
+          coverage_amount?: string | null
+          created_at?: string
+          description?: string | null
+          documents?: string[] | null
+          eligibility_criteria?: Json | null
+          id?: string
+          name: string
+          premium?: string | null
+          provider?: string | null
+          type?: string | null
+          updated_at?: string
+        }
+        Update: {
+          application_link?: string | null
+          benefits?: string[] | null
+          coverage_amount?: string | null
+          created_at?: string
+          description?: string | null
+          documents?: string[] | null
+          eligibility_criteria?: Json | null
+          id?: string
+          name?: string
+          premium?: string | null
+          provider?: string | null
+          type?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never

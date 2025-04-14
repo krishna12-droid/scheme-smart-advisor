@@ -1,15 +1,16 @@
 
 import React, { createContext, useContext, useState, useEffect } from "react";
-import { User } from "../types";
-import { users } from "../services/mockData";
+import { User } from "@supabase/supabase-js";
+import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { useNavigate } from "react-router-dom";
 
 interface AuthContextType {
   currentUser: User | null;
   loading: boolean;
   login: (email: string, password: string) => Promise<void>;
   register: (name: string, email: string, password: string) => Promise<void>;
-  logout: () => void;
+  logout: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -25,80 +26,82 @@ export function useAuth() {
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
+  const navigate = useNavigate();
 
   useEffect(() => {
-    // Check if user is stored in localStorage
-    const storedUser = localStorage.getItem("currentUser");
-    if (storedUser) {
-      setCurrentUser(JSON.parse(storedUser));
-    }
-    setLoading(false);
+    // Set up auth state listener
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      (event, session) => {
+        setCurrentUser(session?.user ?? null);
+        setLoading(false);
+      }
+    );
+
+    // Check for existing session
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setCurrentUser(session?.user ?? null);
+      setLoading(false);
+    });
+
+    return () => subscription.unsubscribe();
   }, []);
 
   const login = async (email: string, password: string) => {
-    setLoading(true);
-    
     try {
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      setLoading(true);
+      const { error } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
+
+      if (error) throw error;
       
-      // In a real app, password would be hashed and validated against database
-      // For now, just check if email exists (password is ignored in this mock)
-      const user = users.find(u => u.email === email);
-      
-      if (user) {
-        setCurrentUser(user);
-        localStorage.setItem("currentUser", JSON.stringify(user));
-        toast.success("Logged in successfully");
-      } else {
-        toast.error("Invalid email or password");
-        throw new Error("Invalid email or password");
-      }
+      toast.success("Logged in successfully");
+      navigate("/dashboard");
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Failed to log in");
+      throw error;
     } finally {
       setLoading(false);
     }
   };
 
   const register = async (name: string, email: string, password: string) => {
-    setLoading(true);
-    
     try {
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
-      // Check if email already exists
-      const existingUser = users.find(u => u.email === email);
-      
-      if (existingUser) {
-        toast.error("Email already in use");
-        throw new Error("Email already in use");
-      }
-      
-      // Create new user (in a real app, this would save to database)
-      const newUser: User = {
-        id: String(users.length + 1),
-        name,
+      setLoading(true);
+      const { error } = await supabase.auth.signUp({
         email,
-        isAdmin: false
-      };
+        password,
+        options: {
+          data: {
+            name,
+          },
+        },
+      });
+
+      if (error) throw error;
       
-      // Add to mock data (in memory only for demo)
-      users.push(newUser);
-      
-      // Set as current user
-      setCurrentUser(newUser);
-      localStorage.setItem("currentUser", JSON.stringify(newUser));
-      
-      toast.success("Account created successfully");
+      toast.success("Account created successfully. Please check your email for verification.");
+      navigate("/dashboard");
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Failed to create account");
+      throw error;
     } finally {
       setLoading(false);
     }
   };
 
-  const logout = () => {
-    setCurrentUser(null);
-    localStorage.removeItem("currentUser");
-    toast.info("Logged out successfully");
+  const logout = async () => {
+    try {
+      const { error } = await supabase.auth.signOut();
+      if (error) throw error;
+      
+      toast.info("Logged out successfully");
+      navigate("/login");
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Failed to log out");
+      throw error;
+    }
   };
 
   const value = {

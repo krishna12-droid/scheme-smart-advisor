@@ -1,15 +1,14 @@
 
 import React, { createContext, useContext, useState, useEffect } from "react";
 import { useAuth } from "./AuthContext";
-import { UserProfile, Scheme } from "../types";
-import { userProfiles, getRecommendedSchemes } from "../services/mockData";
+import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { UserProfile } from "@/types";
 
 interface ProfileContextType {
   profile: UserProfile | null;
-  recommendedSchemes: Scheme[];
   loading: boolean;
-  saveProfile: (profileData: Omit<UserProfile, "id" | "userId">) => void;
+  saveProfile: (profileData: Omit<UserProfile, "id" | "userId">) => Promise<void>;
   hasProfile: boolean;
 }
 
@@ -26,84 +25,97 @@ export function useProfile() {
 export function ProfileProvider({ children }: { children: React.ReactNode }) {
   const { currentUser } = useAuth();
   const [profile, setProfile] = useState<UserProfile | null>(null);
-  const [recommendedSchemes, setRecommendedSchemes] = useState<Scheme[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     if (currentUser) {
       setLoading(true);
-      
-      // Simulate fetching profile from API
-      setTimeout(() => {
-        const foundProfile = userProfiles.find(p => p.userId === currentUser.id);
-        
-        if (foundProfile) {
-          setProfile(foundProfile);
-          const schemes = getRecommendedSchemes(foundProfile);
-          setRecommendedSchemes(schemes);
-        } else {
-          setProfile(null);
-          setRecommendedSchemes([]);
+      const fetchProfile = async () => {
+        try {
+          const { data, error } = await supabase
+            .from("profiles")
+            .select("*")
+            .eq("id", currentUser.id)
+            .single();
+
+          if (error) {
+            console.error("Error fetching profile:", error);
+            return;
+          }
+
+          if (data) {
+            setProfile({
+              id: data.id,
+              userId: data.id,
+              name: data.name,
+              email: data.email,
+              age: data.age,
+              gender: data.gender,
+              state: data.state,
+              district: data.district,
+              income: data.income,
+              maritalStatus: data.marital_status,
+              occupation: data.occupation,
+              education: data.education,
+              healthConditions: data.health_conditions || [],
+              dependents: data.dependents
+            });
+          }
+        } catch (error) {
+          console.error("Error:", error);
+        } finally {
+          setLoading(false);
         }
-        
-        setLoading(false);
-      }, 500);
+      };
+
+      fetchProfile();
     } else {
       setProfile(null);
-      setRecommendedSchemes([]);
       setLoading(false);
     }
   }, [currentUser]);
 
-  const saveProfile = (profileData: Omit<UserProfile, "id" | "userId">) => {
+  const saveProfile = async (profileData: Omit<UserProfile, "id" | "userId">) => {
     if (!currentUser) return;
     
     setLoading(true);
-    
-    // Simulate API call
-    setTimeout(() => {
-      const existingProfileIndex = userProfiles.findIndex(p => p.userId === currentUser.id);
-      
-      if (existingProfileIndex >= 0) {
-        // Update existing profile
-        const updatedProfile = {
-          ...userProfiles[existingProfileIndex],
-          ...profileData
-        };
-        
-        userProfiles[existingProfileIndex] = updatedProfile;
-        setProfile(updatedProfile);
-        
-        const schemes = getRecommendedSchemes(updatedProfile);
-        setRecommendedSchemes(schemes);
-        
-        toast.success("Profile updated successfully");
-      } else {
-        // Create new profile
-        const newProfile: UserProfile = {
-          id: String(userProfiles.length + 1),
-          userId: currentUser.id,
-          ...profileData
-        };
-        
-        userProfiles.push(newProfile);
-        setProfile(newProfile);
-        
-        const schemes = getRecommendedSchemes(newProfile);
-        setRecommendedSchemes(schemes);
-        
-        toast.success("Profile created successfully");
-      }
-      
+    try {
+      const { error } = await supabase
+        .from("profiles")
+        .upsert({
+          id: currentUser.id,
+          name: profileData.name,
+          email: profileData.email,
+          age: profileData.age,
+          gender: profileData.gender,
+          state: profileData.state,
+          district: profileData.district,
+          income: profileData.income,
+          marital_status: profileData.maritalStatus,
+          occupation: profileData.occupation,
+          education: profileData.education,
+          health_conditions: profileData.healthConditions,
+          dependents: profileData.dependents,
+          updated_at: new Date().toISOString()
+        });
+
+      if (error) throw error;
+
+      // Update local state
+      setProfile({ id: currentUser.id, userId: currentUser.id, ...profileData });
+      toast.success("Profile updated successfully");
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Failed to update profile");
+      throw error;
+    } finally {
       setLoading(false);
-    }, 1000);
+    }
   };
 
   return (
     <ProfileContext.Provider
       value={{
         profile,
-        recommendedSchemes,
         loading,
         saveProfile,
         hasProfile: !!profile
