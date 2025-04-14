@@ -39,7 +39,7 @@ export const SchemeFilters = ({
             className="pl-9"
           />
         </div>
-        <div className="flex gap-2">
+        <div className="flex gap-2 flex-wrap">
           <Select value={sortBy} onValueChange={onSortChange}>
             <SelectTrigger className="w-[180px]">
               <SelectValue placeholder="Sort by" />

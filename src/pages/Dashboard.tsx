@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useProfile } from "@/contexts/ProfileContext";
@@ -32,6 +33,21 @@ const DashboardPage = () => {
   const { currentUser } = useAuth();
   const { profile, recommendedSchemes, loading, saveProfile, hasProfile } = useProfile();
   
+  // State for profile form
+  const [age, setAge] = useState<number>(profile?.age || 0);
+  const [gender, setGender] = useState<"male" | "female" | "other">(profile?.gender || "male");
+  const [state, setState] = useState<string>(profile?.state || "");
+  const [district, setDistrict] = useState<string>(profile?.district || "");
+  const [income, setIncome] = useState<number>(profile?.income || 0);
+  const [maritalStatus, setMaritalStatus] = useState<"single" | "married" | "divorced" | "widowed">(
+    profile?.maritalStatus || "single"
+  );
+  const [occupation, setOccupation] = useState<string>(profile?.occupation || "");
+  const [education, setEducation] = useState<string>(profile?.education || "");
+  const [conditions, setConditions] = useState<string[]>(profile?.healthConditions || []);
+  const [dependents, setDependents] = useState<number>(profile?.dependents || 0);
+  
+  // State for filtering and sorting
   const [selectedTab, setSelectedTab] = useState(hasProfile ? "recommendations" : "profile");
   const [searchTerm, setSearchTerm] = useState("");
   const [providerFilter, setProviderFilter] = useState<string[]>([]);
