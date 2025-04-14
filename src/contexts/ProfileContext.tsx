@@ -8,7 +8,7 @@ import { UserProfile } from "@/types";
 interface ProfileContextType {
   profile: UserProfile | null;
   loading: boolean;
-  saveProfile: (profileData: Omit<UserProfile, "id" | "userId">) => Promise<void>;
+  saveProfile: (profileData: Partial<UserProfile>) => Promise<void>;
   hasProfile: boolean;
 }
 
@@ -50,11 +50,11 @@ export function ProfileProvider({ children }: { children: React.ReactNode }) {
               name: data.name,
               email: data.email,
               age: data.age,
-              gender: data.gender,
+              gender: data.gender as "male" | "female" | "other",
               state: data.state,
               district: data.district,
               income: data.income,
-              maritalStatus: data.marital_status,
+              maritalStatus: data.marital_status as "single" | "married" | "divorced" | "widowed",
               occupation: data.occupation,
               education: data.education,
               healthConditions: data.health_conditions || [],
@@ -75,7 +75,7 @@ export function ProfileProvider({ children }: { children: React.ReactNode }) {
     }
   }, [currentUser]);
 
-  const saveProfile = async (profileData: Omit<UserProfile, "id" | "userId">) => {
+  const saveProfile = async (profileData: Partial<UserProfile>) => {
     if (!currentUser) return;
     
     setLoading(true);
@@ -84,25 +84,31 @@ export function ProfileProvider({ children }: { children: React.ReactNode }) {
         .from("profiles")
         .upsert({
           id: currentUser.id,
-          name: profileData.name,
-          email: profileData.email,
-          age: profileData.age,
-          gender: profileData.gender,
-          state: profileData.state,
-          district: profileData.district,
-          income: profileData.income,
-          marital_status: profileData.maritalStatus,
-          occupation: profileData.occupation,
-          education: profileData.education,
-          health_conditions: profileData.healthConditions,
-          dependents: profileData.dependents,
+          name: profileData.name || profile?.name,
+          email: profileData.email || profile?.email,
+          age: profileData.age || profile?.age,
+          gender: profileData.gender || profile?.gender,
+          state: profileData.state || profile?.state,
+          district: profileData.district || profile?.district,
+          income: profileData.income || profile?.income,
+          marital_status: profileData.maritalStatus || profile?.maritalStatus,
+          occupation: profileData.occupation || profile?.occupation,
+          education: profileData.education || profile?.education,
+          health_conditions: profileData.healthConditions || profile?.healthConditions,
+          dependents: profileData.dependents || profile?.dependents,
           updated_at: new Date().toISOString()
         });
 
       if (error) throw error;
 
       // Update local state
-      setProfile({ id: currentUser.id, userId: currentUser.id, ...profileData });
+      setProfile({
+        ...profile,
+        ...profileData,
+        id: currentUser.id,
+        userId: currentUser.id
+      } as UserProfile);
+      
       toast.success("Profile updated successfully");
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "Failed to update profile");

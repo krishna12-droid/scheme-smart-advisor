@@ -1,4 +1,3 @@
-
 export interface User {
   id: string;
   name: string;
@@ -9,42 +8,37 @@ export interface User {
 export interface UserProfile {
   id: string;
   userId: string;
-  age: number;
-  gender: 'male' | 'female' | 'other';
-  state: string;
-  district: string;
-  income: number;
-  maritalStatus: 'single' | 'married' | 'divorced' | 'widowed';
-  occupation: string;
-  education: string;
-  healthConditions: string[];
-  dependents: number;
+  name?: string;
+  email?: string;
+  age?: number;
+  gender?: "male" | "female" | "other";
+  state?: string;
+  district?: string;
+  income?: number;
+  maritalStatus?: "single" | "married" | "divorced" | "widowed";
+  occupation?: string;
+  education?: string;
+  healthConditions?: string[];
+  dependents?: number;
 }
 
 export interface Scheme {
   id: string;
   name: string;
-  provider: 'LIC' | 'Star Health' | 'Government';
+  provider: string;
   type: string;
   description: string;
-  eligibilityCriteria: {
-    minAge?: number;
-    maxAge?: number;
-    gender?: ('male' | 'female' | 'other')[];
-    states?: string[];
-    minIncome?: number;
-    maxIncome?: number;
-    maritalStatus?: ('single' | 'married' | 'divorced' | 'widowed')[];
-    occupation?: string[];
-    educationLevel?: string[];
-    healthConditions?: {
-      include?: string[];
-      exclude?: string[];
-    };
-  };
+  eligibility_criteria: Record<string, any>;
   benefits: string[];
-  applicationLink: string;
-  coverageAmount?: string;
+  application_link: string;
+  coverage_amount?: string;
   premium?: string;
   documents?: string[];
+}
+
+export interface SavedScheme {
+  id: string;
+  user_id: string;
+  scheme_id: string;
+  scheme?: Scheme;
 }
