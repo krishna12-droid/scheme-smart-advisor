@@ -99,7 +99,7 @@ const DashboardPage = () => {
       <main className="flex-grow py-8 bg-gray-50">
         <div className="container mx-auto px-4">
           <h1 className="text-3xl font-bold mb-6">
-            {hasProfile ? `Welcome back, ${currentUser?.name}` : "Complete Your Profile"}
+            {hasProfile ? `Welcome back, ${currentUser?.email?.split('@')[0]}` : "Complete Your Profile"}
           </h1>
           
           <Tabs value={selectedTab} onValueChange={setSelectedTab} className="space-y-6">

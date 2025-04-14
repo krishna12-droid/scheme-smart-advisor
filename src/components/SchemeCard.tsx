@@ -58,10 +58,10 @@ const SchemeCard = ({ scheme }: SchemeCardProps) => {
               ))}
             </ul>
             
-            {scheme.coverageAmount && (
+            {scheme.coverage_amount && (
               <div className="mb-2">
                 <span className="text-sm font-semibold">Coverage: </span>
-                <span className="text-sm">{scheme.coverageAmount}</span>
+                <span className="text-sm">{scheme.coverage_amount}</span>
               </div>
             )}
             
@@ -105,7 +105,7 @@ const SchemeCard = ({ scheme }: SchemeCardProps) => {
       
       <CardFooter>
         <Button asChild className="w-full">
-          <a href={scheme.applicationLink} target="_blank" rel="noopener noreferrer">
+          <a href={scheme.application_link} target="_blank" rel="noopener noreferrer">
             Apply Now <ExternalLink className="ml-2 h-4 w-4" />
           </a>
         </Button>

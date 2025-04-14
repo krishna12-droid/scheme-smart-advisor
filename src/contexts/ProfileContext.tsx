@@ -3,13 +3,15 @@ import React, { createContext, useContext, useState, useEffect } from "react";
 import { useAuth } from "./AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { UserProfile } from "@/types";
+import { UserProfile, Scheme } from "@/types";
+import { getRecommendedSchemes } from "@/services/mockData";
 
 interface ProfileContextType {
   profile: UserProfile | null;
   loading: boolean;
   saveProfile: (profileData: Partial<UserProfile>) => Promise<void>;
   hasProfile: boolean;
+  recommendedSchemes: Scheme[];
 }
 
 const ProfileContext = createContext<ProfileContextType | undefined>(undefined);
@@ -26,6 +28,7 @@ export function ProfileProvider({ children }: { children: React.ReactNode }) {
   const { currentUser } = useAuth();
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
+  const [recommendedSchemes, setRecommendedSchemes] = useState<Scheme[]>([]);
 
   useEffect(() => {
     if (currentUser) {
@@ -44,7 +47,7 @@ export function ProfileProvider({ children }: { children: React.ReactNode }) {
           }
 
           if (data) {
-            setProfile({
+            const userProfile: UserProfile = {
               id: data.id,
               userId: data.id,
               name: data.name,
@@ -59,7 +62,13 @@ export function ProfileProvider({ children }: { children: React.ReactNode }) {
               education: data.education,
               healthConditions: data.health_conditions || [],
               dependents: data.dependents
-            });
+            };
+            
+            setProfile(userProfile);
+            
+            // Get recommended schemes based on profile
+            const schemes = getRecommendedSchemes(userProfile);
+            setRecommendedSchemes(schemes);
           }
         } catch (error) {
           console.error("Error:", error);
@@ -71,6 +80,7 @@ export function ProfileProvider({ children }: { children: React.ReactNode }) {
       fetchProfile();
     } else {
       setProfile(null);
+      setRecommendedSchemes([]);
       setLoading(false);
     }
   }, [currentUser]);
@@ -102,12 +112,18 @@ export function ProfileProvider({ children }: { children: React.ReactNode }) {
       if (error) throw error;
 
       // Update local state
-      setProfile({
+      const updatedProfile = {
         ...profile,
         ...profileData,
         id: currentUser.id,
         userId: currentUser.id
-      } as UserProfile);
+      } as UserProfile;
+      
+      setProfile(updatedProfile);
+      
+      // Update recommended schemes based on new profile
+      const schemes = getRecommendedSchemes(updatedProfile);
+      setRecommendedSchemes(schemes);
       
       toast.success("Profile updated successfully");
     } catch (error) {
@@ -124,7 +140,8 @@ export function ProfileProvider({ children }: { children: React.ReactNode }) {
         profile,
         loading,
         saveProfile,
-        hasProfile: !!profile
+        hasProfile: !!profile,
+        recommendedSchemes
       }}
     >
       {children}
